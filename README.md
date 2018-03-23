@@ -1,4 +1,5 @@
-Mars Rover
+## Mars Rover
+
 A squad of robotic rovers are to be landed by NASA on a plateau on Mars.
 
 This plateau, which is curiously rectangular, must be navigated by the rovers so that their on board cameras can get a complete view of the surrounding terrain to send back to Earth.
@@ -22,13 +23,16 @@ Input 1: Landing co-ordinates for the named Rover. The position is made up of tw
 Input 2: Navigation instructions for the named rover. i.e a string containing ('L', 'R', 'M').
 
 Test Input:
-
+```
 Plateau:5 5
 Rover1 Landing:1 2 N
 Rover1 Instructions:LMLMLMLMM
 Rover2 Landing:3 3 E
 Rover2 Instructions:MMRMMRMRRM
-Expected Output:
+```
 
+Expected Output:
+```
 Rover1:1 3 N
 Rover2:5 1 E
+```
