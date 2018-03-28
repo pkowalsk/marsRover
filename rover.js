@@ -91,19 +91,27 @@ class Rover extends React.Component {
 		// check if rover is already on grid, and delete it to set new point
 		let roverPtIndex = data.findIndex(rover2 => rover2.name === rover.roverName);
 		if (roverPtIndex > -1){
-			data.splice(roverPtIndex, 1);
+			data[roverPtIndex] = roverPt;
 		}
 
 		 // create the copy of state array
-		data[data.length] = roverPt;
+		//data[data.length] = roverPt;
 		this.setState({ data }); 
 
 		return true;
 	}
 
-	checkCommand() {
+	checkCommand(roverName) {
 		let curInstruction = $('#instructions').val(),
+			roverIndex; //= this.state.aRovers.length - 1
+		let aRovers = [...this.state.aRovers];
+
+		// find rover that was issued command
+		if(aRovers.length > 0){
+			roverIndex = aRovers.findIndex(rover2 => rover2.roverName === roverName);
+		} else {
 			roverIndex = this.state.aRovers.length - 1;
+		}
 
 		// check for landing point
 		let landingPt = curInstruction.toLowerCase().search("landing:");
@@ -272,10 +280,10 @@ class Rover extends React.Component {
 
 			if(roverIndex == -1){
 				this.setState({ aRovers: [...this.state.aRovers, {roverName: roverName}] }, function(){
-					this.checkCommand();
+					this.checkCommand(roverName);
 				});
 			} else {
-				this.checkCommand();
+				this.checkCommand(roverName);
 			}
 		}
 	}
