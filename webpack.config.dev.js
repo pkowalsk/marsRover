@@ -11,7 +11,7 @@ export default {
       },
     module: {
         loaders: [
-            { test: /\.js$/, include: path.join(__dirname, ''), loaders: ['babel-loader'] },
+            { test: /\.js$/, include: path.join(__dirname, ''), exclude: path.join(__dirname, 'node_modules'), loaders: ['babel-loader'] },
             {
                 test: /(\.css)$/,
                 include: [

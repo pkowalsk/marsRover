@@ -1,5 +1,6 @@
 import React from 'react';
 import $ from 'jQuery';
+import Plot from 'react-plotly.js';
 
 class Rover extends React.Component {
 	constructor(props, context) {
@@ -8,7 +9,8 @@ class Rover extends React.Component {
 		this.state = {
 			aRovers: [],
 			plateauX: 0,
-			plateauY: 0
+			plateauY: 0,
+			data: []
 		};
 
 		// bind readInstruction function here, so it's not rebound each time the dom is updated
@@ -20,12 +22,13 @@ class Rover extends React.Component {
 
 	// function to move the rover according to instructions given
 	moveRover(rover) {
-		var instr = rover.instructions,
+		let instr = rover.instructions,
 			curDirection = rover.curDirection.toLowerCase();
 
+
 		// loop through instructions
-		for(var i=0; i < instr.length; i++){
-			var curInstr = instr[i].toLowerCase();
+		for(let i=0; i < instr.length; i++){
+			let curInstr = instr[i].toLowerCase();
 			
 			// m = move 1 space
 			if(curInstr == 'm'){
@@ -73,6 +76,28 @@ class Rover extends React.Component {
 			}
 		}
 
+		let roverPt = {
+			x: [rover.landingPointX],
+			y: [rover.landingPointY],
+			marker: {
+				size: 10
+			},
+			mode: 'markers',
+			name: rover.roverName
+		};
+
+		let data = [...this.state.data];
+
+		// check if rover is already on grid, and delete it to set new point
+		let roverPtIndex = data.findIndex(rover2 => rover2.name === rover.roverName);
+		if (roverPtIndex > -1){
+			data.splice(roverPtIndex, 1);
+		}
+
+		 // create the copy of state array
+		data[data.length] = roverPt;
+		this.setState({ data }); 
+
 		return true;
 	}
 
@@ -107,6 +132,10 @@ class Rover extends React.Component {
 
 			this.setState({ aRovers }); //update the state
 
+			let curRoverName = aRovers[roverIndex].roverName;
+			let data = [...this.state.data];
+			let roverPtIndex = data.findIndex(rover2 => rover2.name === curRoverName);
+
 			// if landing off of plateau, alert user
 			if(landingData.slice(0, 1) > this.state.plateauX || landingData.slice(2, 3) > this.state.plateauY){
 				alert('You landed off of the plateau!');
@@ -117,11 +146,24 @@ class Rover extends React.Component {
 				this.setState({ aRovers });
 
 				return;
+			} else if(roverPtIndex === -1){
+				let roverPt = {
+					x: [landingData.slice(0, 1)],
+					y: [landingData.slice(2, 3)],
+					mode: 'markers',
+					name: curRoverName,
+					marker: {
+						size: 10
+					}
+				};
+
+				data[data.length] = roverPt;
+				this.setState({ data }); 
 			}
 		}
 
 		// check for instructions
-		var instrPt = curInstruction.toLowerCase().search("instructions:");
+		let instrPt = curInstruction.toLowerCase().search("instructions:");
 
 		if(instrPt >= 0){
 			// eliminate "Instructions:" from instruction
@@ -153,6 +195,11 @@ class Rover extends React.Component {
 
 			// if rover fell off the plateau, remove it from the array
 			if(!moveSuccessful){
+				let data = [...this.state.data];
+				let roverPtIndex = data.findIndex(rover2 => rover2.name === this.state.aRovers[roverIndex].roverName);
+				data.splice(roverPtIndex, 1);
+				this.setState({ data });
+
 				// remove the fallen rover from the array
 				let aRovers = [...this.state.aRovers];
 				aRovers.splice(roverIndex, 1);
@@ -182,12 +229,39 @@ class Rover extends React.Component {
 			// slice out plateau instruction, should be 3 characters long (ie: "5 5")
 			let platInstr = curInstruction.slice(instrStartPos, instrEndPos);
 
-			$('#platDimensions').html(result);
 			// set plateau size coordinates
 			this.setState({plateauX: platInstr.slice(0, 1), plateauY: platInstr.slice(2, 3)})
 
-			let result = `Plateau: ${platInstr.slice(0, 1)} ${platInstr.slice(2, 3)}`;
-			$('#platDimensions').html(result);
+			let trace1 = {
+			  x: [0, 0, platInstr.slice(0, 1)],
+			  y: [0, platInstr.slice(2, 3), platInstr.slice(2, 3)],
+			  type: 'scatter',
+			  name: 'Plateau Edge',
+			  line: {
+			    color: 'rgb(255, 0, 0)',
+			    width: 3
+			  }
+			};
+
+			let trace2 = {
+			  x: [0, platInstr.slice(0, 1), platInstr.slice(0, 1)],
+			  y: [0, 0, platInstr.slice(2, 3)],
+			  type: 'scatter',
+			  showlegend: false,
+			  line: {
+			    color: 'rgb(255, 0, 0)',
+			    width: 3
+			  }
+			};
+
+			//this.state.data = [trace1, trace2];
+			//this.setState({ data: [...this.state.data, {trace1, trace2}] });
+			let data = [...this.state.data]; // create the copy of state array
+
+			data[0] = trace1;
+			data[1] = trace2;
+
+			this.setState({ data }); //update the state
 		} else {
 			// find index of first space to set rover name
 			let endOfName = curInstruction.search(' ');
@@ -248,12 +322,19 @@ class Rover extends React.Component {
 				</div>
 				<div className="row">
 					<div className="col-md-6">
-						<div style={{paddingTop: 20 + 'px'}} id="platDimensions"></div>
-
 						{this.state.aRovers.map(rover =>
 				        	<RoverStatus key={rover.roverName} rover={rover} />
 				        )}
 					</div>
+				</div>
+
+				<div className="row">
+					<div className="col-md-8">
+						<Plot
+					        	data={this.state.data}
+					        	layout={{width:420, height: 420, title: 'Plateau Map', yaxis: {dtick:1}, xaxis: {dtick:1}}}
+					      />
+					 </div>
 				</div>
 			</div>
 		);
